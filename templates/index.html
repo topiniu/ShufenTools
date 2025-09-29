@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>People Icon Remover</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --primary: #4f46e5;
+            --primary-dark: #3b36b0;
+            --accent: #7c3aed;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --surface: #ffffff;
+            --surface-muted: #f8fafc;
+            --border: #e2e8f0;
+            --text: #111827;
+            --text-muted: #6b7280;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: clamp(16px, 4vw, 48px);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .container {
+            width: min(100%, 720px);
+            background: var(--surface);
+            border-radius: 20px;
+            box-shadow: 0 20px 45px rgba(15, 23, 42, 0.15);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: linear-gradient(45deg, var(--primary), var(--accent));
+            color: white;
+            padding: clamp(24px, 6vw, 40px);
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: clamp(1.75rem, 4vw, 2.4rem);
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .header p {
+            opacity: 0.92;
+            font-size: clamp(1rem, 2.8vw, 1.1rem);
+            max-width: 28rem;
+            margin: 0 auto;
+            line-height: 1.4;
+        }
+
+        .content {
+            padding: clamp(20px, 5vw, 36px);
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 16px;
+            padding: clamp(24px, 6vw, 40px);
+            text-align: center;
+            background: var(--surface-muted);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: grid;
+            gap: 12px;
+            place-items: center;
+            min-height: 180px;
+        }
+
+        .upload-area:hover,
+        .upload-area:focus-visible {
+            border-color: var(--primary);
+            background: #eef2ff;
+            outline: none;
+        }
+
+        .upload-area.dragover {
+            border-color: var(--accent);
+            background: #ede9fe;
+        }
+
+        .upload-icon {
+            font-size: clamp(2.5rem, 8vw, 3.2rem);
+            color: #9ca3af;
+        }
+
+        .upload-text {
+            font-size: clamp(1.05rem, 3.2vw, 1.2rem);
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .upload-subtext {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            max-width: 22rem;
+            line-height: 1.4;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .btn {
+            padding: 12px 22px;
+            border: none;
+            border-radius: 999px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            touch-action: manipulation;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, var(--primary), var(--accent));
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 25px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn-secondary {
+            background: #1f2937;
+            color: white;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #111827;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background: #059669;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-warning:hover:not(:disabled) {
+            background: #d97706;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: #dc2626;
+        }
+
+        .btn-compact {
+            padding: 8px 14px;
+            font-size: 0.9rem;
+        }
+
+        .progress-container {
+            display: none;
+            margin: 10px 0 0;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--border);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .file-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            background: var(--surface-muted);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .file-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: var(--text);
+            word-break: break-word;
+        }
+
+        .file-size {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .processed-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .processed-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .primary-controls {
+            position: sticky;
+            bottom: -36px;
+            background: linear-gradient(180deg, transparent 0%, var(--surface) 30%);
+            padding-top: 12px;
+            padding-bottom: clamp(8px, 4vw, 18px);
+            border-radius: 0 0 20px 20px;
+        }
+
+        .message {
+            padding: 14px 16px;
+            border-radius: 12px;
+            border: 1px solid transparent;
+            font-size: 0.95rem;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        .message.success {
+            background: #d1fae5;
+            color: #065f46;
+            border-color: #a7f3d0;
+        }
+
+        .message.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-color: #fca5a5;
+        }
+
+        .processed-files {
+            margin-top: 10px;
+            display: none;
+        }
+
+        .processed-files h3 {
+            color: var(--text);
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+        }
+
+        .processed-card {
+            background: var(--surface-muted);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            display: grid;
+            gap: 10px;
+        }
+
+        .processed-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: white;
+            border: 1px solid #e2e8f0;
+        }
+
+        .processed-item a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            overflow-wrap: anywhere;
+        }
+
+        .processed-item small {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+
+            .container {
+                border-radius: 16px;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .file-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .processed-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .primary-controls {
+                gap: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                border-radius: 14px;
+                box-shadow: 0 15px 30px rgba(15, 23, 42, 0.12);
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .upload-area {
+                min-height: 150px;
+                padding: 24px;
+            }
+
+            .controls {
+                gap: 10px;
+            }
+
+            .processed-card {
+                padding: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 People Icon Remover</h1>
+            <p>Upload images to automatically remove people icons from your screenshots</p>
+        </div>
+
+        <div class="content">
+            <div class="upload-area" role="button" tabindex="0" onclick="document.getElementById('fileInput').click()" onkeydown="if(event.key==='Enter' || event.key===' '){event.preventDefault();document.getElementById('fileInput').click();}">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">Click to select files or drag and drop</div>
+                <div class="upload-subtext">Supports PNG, JPG, JPEG, GIF, BMP, TIFF (Max 50MB total)</div>
+            </div>
+
+            <input type="file" id="fileInput" class="file-input" multiple accept="image/*">
+
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill"></div>
+                </div>
+                <div style="text-align: center; margin-top: 10px; color: #6b7280;">
+                    Processing images...
+                </div>
+            </div>
+
+            <div class="file-list" id="fileList"></div>
+
+            <div class="controls primary-controls">
+                <button class="btn btn-primary" onclick="uploadFiles()" id="uploadBtn" disabled>
+                    🔄 Process Images
+                </button>
+                <button class="btn btn-secondary" onclick="clearFiles()">
+                    🗑️ Clear All
+                </button>
+            </div>
+
+            <div id="messageArea"></div>
+
+            <div class="processed-files" id="processedFiles">
+                <h3>✅ Processed Files</h3>
+                <div class="processed-card" id="processedFilesList"></div>
+                <div class="controls">
+                    <button class="btn btn-success" onclick="downloadAll()">
+                        📦 Download All as ZIP
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedFiles = [];
+
+        const fileInput = document.getElementById('fileInput');
+        const uploadArea = document.querySelector('.upload-area');
+        const fileList = document.getElementById('fileList');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const messageArea = document.getElementById('messageArea');
+        const progressContainer = document.querySelector('.progress-container');
+        const progressFill = document.querySelector('.progress-fill');
+        const processedFiles = document.getElementById('processedFiles');
+        const processedFilesList = document.getElementById('processedFilesList');
+
+        // Drag and drop functionality
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+            handleFiles(files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(Array.from(e.target.files));
+        });
+
+        function handleFiles(files) {
+            selectedFiles = files;
+            displayFiles();
+            uploadBtn.disabled = files.length === 0;
+        }
+
+        function displayFiles() {
+            fileList.innerHTML = '';
+            selectedFiles.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `
+                    <div class="file-meta">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-size">${formatFileSize(file.size)}</div>
+                    </div>
+                    <button class="btn btn-danger btn-compact" type="button" onclick="removeFile(${index})" aria-label="Remove ${file.name}">
+                        Remove
+                    </button>
+                `;
+                fileList.appendChild(fileItem);
+            });
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            displayFiles();
+            uploadBtn.disabled = selectedFiles.length === 0;
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function showMessage(message, type) {
+            messageArea.innerHTML = `<div class="message ${type}">${message}</div>`;
+            setTimeout(() => {
+                messageArea.innerHTML = '';
+            }, 5000);
+        }
+
+        async function uploadFiles() {
+            if (selectedFiles.length === 0) return;
+
+            const formData = new FormData();
+            selectedFiles.forEach(file => {
+                formData.append('files', file);
+            });
+
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = '⏳ Processing...';
+            progressContainer.style.display = 'flex';
+            progressFill.style.width = '30%';
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                progressFill.style.width = '80%';
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    progressFill.style.width = '100%';
+                    const totalIcons = result.debug_info ? result.debug_info.reduce((sum, info) => sum + info.icons_found, 0) : 0;
+                    showMessage(`✅ Successfully processed ${result.files.length} files! Found ${totalIcons} icons.`, 'success');
+                    displayProcessedFiles(result.files, result.debug_info);
+
+                    // Clear file selection
+                    selectedFiles = [];
+                    fileList.innerHTML = '';
+                    fileInput.value = '';
+                } else {
+                    showMessage(`❌ Error: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`❌ Error: ${error.message}`, 'error');
+            } finally {
+                uploadBtn.disabled = selectedFiles.length === 0;
+                uploadBtn.textContent = '🔄 Process Images';
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                    progressFill.style.width = '0%';
+                }, 1000);
+            }
+        }
+
+        function displayProcessedFiles(files, debugInfo = []) {
+            processedFilesList.innerHTML = '';
+            files.forEach((filename, index) => {
+                const debug = debugInfo[index] || {};
+                const fileItem = document.createElement('div');
+                fileItem.className = 'processed-item';
+                fileItem.innerHTML = `
+                    <div class="processed-info">
+                        <div class="file-name">${filename}</div>
+                        ${debug.icons_found !== undefined ?
+                            `<small>Icons detected: ${debug.icons_found}</small>` :
+                            ''}
+                    </div>
+                    <div class="processed-actions">
+                        ${debug.debug_image ?
+                            `<a href="/download/${debug.debug_image}" class="btn btn-warning btn-compact">
+                                Debug View
+                            </a>` :
+                            ''}
+                        <a href="/download/${filename}" class="btn btn-success btn-compact">
+                            Download
+                        </a>
+                    </div>
+                `;
+                processedFilesList.appendChild(fileItem);
+            });
+            processedFiles.style.display = 'block';
+        }
+
+        async function downloadAll() {
+            window.open('/download_all', '_blank');
+        }
+
+        async function clearFiles() {
+            if (confirm('Are you sure you want to clear all files?')) {
+                try {
+                    const response = await fetch('/clear');
+                    const result = await response.json();
+                    showMessage(result.message, 'success');
+
+                    // Reset UI
+                    selectedFiles = [];
+                    fileList.innerHTML = '';
+                    fileInput.value = '';
+                    processedFiles.style.display = 'none';
+                    uploadBtn.disabled = true;
+                } catch (error) {
+                    showMessage(`Error: ${error.message}`, 'error');
+                }
+            }
+        }
+    </script>
+</body>
+</html>
